@@ -131,18 +131,23 @@ async def combine_search(request: Request):
 async def rerank_search(request: Request):
     try:
         body = await request.json()
-        original_query = body.get('original_query')  # Use .get to handle missing query
+        original_query = body.get('original_query') 
         relevant_images = body['relevant_images']
         irrelevant_images = body['irrelevant_images']
         topk = body.get('topk', 10)
 
         base_dir = '/mmlabworkspace/Students/visedit/AIC2023/Data/Reframe'
+        feats_dir = '/mmlabworkspace/Students/visedit/AIC2023/Features/Bvecs'
+
         full_relevant_images = [os.path.join(base_dir, image_path) for image_path in relevant_images]
         full_irrelevant_images = [os.path.join(base_dir, image_path) for image_path in irrelevant_images]
-
+        
         original_query_vector = blip_text_embedd(original_query) if original_query else None
-        relevant_vectors = [blip_image_embedd(image_path) for image_path in full_relevant_images]
-        irrelevant_vectors = [blip_image_embedd(image_path) for image_path in full_irrelevant_images]
+        relevant_vectors = [get_feature_vector(feats_dir, image_path) for image_path in full_relevant_images]
+        irrelevant_vectors = [get_feature_vector(feats_dir, image_path) for image_path in full_irrelevant_images]
+        relevant_vectors = [vec for vec in relevant_vectors if vec is not None]
+        irrelevant_vectors = [vec for vec in irrelevant_vectors if vec is not None]
+        
         modified_query_vector = rerank_images.search(
             original_query_vector,
             relevant_vectors,
