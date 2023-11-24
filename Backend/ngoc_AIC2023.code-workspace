@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../../Datasets/AIC2023"
+		}
+	],
+	"settings": {
+		"liveServer.settings.port": 5501
+	}
+}

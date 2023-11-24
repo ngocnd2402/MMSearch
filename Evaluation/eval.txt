@@ -1,0 +1,9 @@
+BLIP:
+Average Precision: 0.5707304722341662
+Mean Reciprocal Rank: 0.571246983905873
+Mean Average Precision (MAP): 0.5706351654365386
+
+CLIP:
+Average Precision: 0.29957671036375544
+Mean Reciprocal Rank: 0.2999137666558875
+Mean Average Precision (MAP): 0.29950588570212455

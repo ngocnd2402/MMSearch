@@ -1,0 +1,3 @@
+[submodule "Backend/OCR/mmocr"]
+	path = Backend/OCR/mmocr
+	url = https://github.com/open-mmlab/mmocr
