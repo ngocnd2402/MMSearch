@@ -1,3 +1,6 @@
 [submodule "Backend/OCR/mmocr"]
 	path = Backend/OCR/mmocr
 	url = https://github.com/open-mmlab/mmocr
+[submodule "InferaSearch-fe"]
+	path = InferaSearch-fe
+	url = https://github.com/blkhanhlinh/InferaSearch-fe.git
