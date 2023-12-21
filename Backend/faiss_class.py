@@ -12,7 +12,12 @@ from natsort import natsorted
 import time
 import requests
 from io import BytesIO
+import base64
 from towhee import pipe, ops
+import sys 
+sys.path.append('/mmlabworkspace/Students/visedit/AIC2023/Sketch_LVM')
+from src.model_LN_prompt import Model
+from torchvision import transforms
     
 class BlipTextEmbedding:
     def __init__(self):
@@ -50,7 +55,47 @@ class BlipImageEmbedding:
         output_image = self.img_pipe(image)
         image_embedd = output_image.get()
         image_vec = np.array(image_embedd).reshape(-1)
-        return image_vec     
+        return image_vec   
+
+class SketchEmbedding:
+    def __init__(self, device="cuda", CKPT_PATH="/mmlabworkspace/Students/visedit/AIC2023/Sketch_LVM/saved_models/LN_prompt/last.ckpt"):
+        self.device = device
+        self.model = Model()
+        self.model_checkpoint = torch.load(CKPT_PATH, map_location=self.device)
+        self.model.load_state_dict(self.model_checkpoint['state_dict'])
+        self.model.to(self.device)
+        self.model.eval()
+
+    @staticmethod
+    def get_transform():
+        return transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+
+    def convert_to_image(self, sketch_data: str) -> Image.Image:
+        if sketch_data.startswith("http://") or sketch_data.startswith("https://"):
+            response = requests.get(sketch_data)
+            image = Image.open(BytesIO(response.content)).convert("RGB")
+        else:
+            base64_data = sketch_data.split(",")[1]
+            image_data = base64.b64decode(base64_data)
+            image = Image.open(BytesIO(image_data)).convert("RGB")
+        return image
+
+    def __call__(self, sketch_data: str) -> np.ndarray:
+        image = self.convert_to_image(sketch_data)
+        transform = self.get_transform()
+        image_tensor = transform(image).unsqueeze(0).to(self.device)
+
+        with torch.no_grad():
+            image_feat = self.model(image_tensor, dtype='sketch')
+            image_feat_numpy = image_feat.cpu().numpy()
+            image_norm = (image_feat_numpy) / (np.linalg.norm(image_feat_numpy))
+            image_vec = np.array(image_norm).reshape(-1)
+        return image_vec
+
     
 class VectorIndexer:
     def __init__(self, features_path: str, keyframe_folder: str):
@@ -90,14 +135,13 @@ class VectorSearchEngine:
         query_arr /= np.linalg.norm(query_arr)
         distances, indices = index.search(np.expand_dims(query_arr, axis=0), topk)
         
-        search_result = []
-        for i in range(topk):
-            index_to_find = indices[0][i]
-            distance = 1 - distances[0][i]
-            frame_path = video_frame_mapping.get(index_to_find)
-            search_result.append({"frame": frame_path, "cosine_similarity": distance})
-        
-        return search_result
+        return [
+            {
+                "frame": video_frame_mapping.get(index),
+                "cosine_similarity": 1 - distances[0][i]
+            }
+            for i, index in enumerate(indices[0]) if index in video_frame_mapping
+        ]
 
 class RerankImages:
     def __init__(self, alpha: float, beta: float, gamma: float):
@@ -105,7 +149,7 @@ class RerankImages:
         self.beta = beta
         self.gamma = gamma
 
-    def search(self, query_vector: np.ndarray, relevant_vectors: List[np.ndarray], irrelevant_vectors: List[np.ndarray]) -> np.ndarray:
+    def reformulate(self, query_vector: np.ndarray, relevant_vectors: List[np.ndarray], irrelevant_vectors: List[np.ndarray]) -> np.ndarray:
         if query_vector is None or not query_vector.size:
             text_query = np.zeros_like(relevant_vectors[0] if relevant_vectors else irrelevant_vectors[0])
         else:
