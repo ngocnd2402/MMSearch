@@ -1,6 +1,7 @@
 from faiss_class import (
     BlipTextEmbedding,
     BlipImageEmbedding,
+    SketchEmbedding,
     VectorIndexer,
     VectorSearchEngine,
     RerankImages
@@ -16,26 +17,33 @@ from pydantic import BaseModel
 import uvicorn
 from typing import List, Dict, Any
 import traceback
+from PIL import Image
 from math import ceil, floor
 import asyncio
 import numpy as np
 import csv
 from natsort import natsorted
+from fastapi import File, UploadFile, Form, HTTPException
+from fastapi.param_functions import File
 
 # GLOBAL VARIABLES
 
 blip_text_embedd = BlipTextEmbedding()
 blip_image_embedd = BlipImageEmbedding()
+sketch_embedd = SketchEmbedding()
 
 KEYFRAME_PATH = "Data/Reframe"
 MAPFRAME_PATH = "Data/Mapframe"
 METADATA_PATH = "Data/Metadata"
 FEATURES_PATH = "Features/Bvecs"
+SKETCH_PATH = "Features/Sketch"
 frontend_mapping_folder = "Data/Mapframe"
 inverted_file = "JSON/inverted_file.json"
 
 vector_indexer = VectorIndexer(FEATURES_PATH, KEYFRAME_PATH)
+sketch_indexer = VectorIndexer(SKETCH_PATH, KEYFRAME_PATH)
 vector_search_engine = VectorSearchEngine(vector_indexer)
+sketch_search_engine = VectorSearchEngine(sketch_indexer)
 ocr_search_engine = Meilisearch('OCR')
 asr_search_engine = Meilisearch('ASR')
 obj_search_engine = ObjectRetrieval(inverted_file)
