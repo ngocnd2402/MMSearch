@@ -37,17 +37,20 @@ async def blip_search(query: str = Form(...), topk: int = Form(...)):
 
 @app.post("/image_search")
 async def image_search(image_path: str = Form(...), topk: int = Form(...)):
-    image_feat_arr = blip_image_embedd(image_path) 
+    base_dir = '/mmlabworkspace/Students/visedit/AIC2023/Data/Reframe'
+    feats_dir = '/mmlabworkspace/Students/visedit/AIC2023/Features/Bvecs'
+    img_path = f'{base_dir}/{image_path}'
+    image_feat_arr = get_feature_vector(feats_dir, img_path)
     topk_results = vector_search_engine.search(image_feat_arr, topk)
     return topk_results
+
 
 @app.post("/ocr_search")
 async def ocr_search(query: str = Form(...), topk: int = Form(...)):
     print("Received query:", query) 
     topk_results = ocr_search_engine.query(query, topk)
     for res in topk_results:
-        if not res['frame'].endswith('.jpg'):
-            res['frame'] += '.jpg'
+        res['frame'] += '.jpg'
     return topk_results
 
 @app.post("/asr_search")
@@ -60,16 +63,19 @@ async def asr_search(query: str = Form(...), topk: int = Form(...)):
     for result in asr_results:
         frame_start_path = result["frame_start"]
         frame_end_path = result["frame_end"]
-        frame_start_number = int(frame_start_path.split('/')[-1].split('.')[0])
-        frame_end_number = int(frame_end_path.split('/')[-1].split('.')[0])
-        video_folder = "/".join(frame_start_path.split('/')[:-1])
 
-        for frame_number in range(frame_start_number, frame_end_number + 1):
-            frame_format = str(frame_number).zfill(6)
-            frame_res = os.path.join(KEYFRAME_PATH, video_folder, f"{frame_format}.jpg")
+        video_folder, start_frame = split_path(frame_start_path)
+        _, end_frame = split_path(frame_end_path)
+        video_folder_path = os.path.join(KEYFRAME_PATH, video_folder)
 
-            if os.path.exists(frame_res):
-                frame_res_relative = frame_res.split("Reframe/")[1]
+        start_frame_index = find_image_position(video_folder_path, start_frame)
+        end_frame_index = find_image_position(video_folder_path, end_frame)
+
+        if start_frame_index != -1 and end_frame_index != -1:
+            for frame_number in range(start_frame_index, end_frame_index + 1):
+                frame_name = natsorted(os.listdir(video_folder_path))[frame_number]
+                frame_res_relative = os.path.join(video_folder, frame_name)
+
                 if frame_res_relative not in unique_frames:
                     unique_frames.add(frame_res_relative)
                     formatted_results.append({"frame": frame_res_relative})
@@ -77,14 +83,21 @@ async def asr_search(query: str = Form(...), topk: int = Form(...)):
     final_results = formatted_results[:topk]
     return final_results
 
+
 @app.post("/object_search")
 async def object_query(request: Request):
-    print(request)
     body = await request.json()
     query_input = body['query_input']
     topk = body.get('topk', 10)
     results = obj_search_engine.search_image(query_input, topk)
     return results
+
+@app.post("/sketch_search")
+async def sketch_search(query: str = Form(...), topk: int = Form(...)):
+    sketch_vector = sketch_embedd(query)
+    search_results = sketch_search_engine.search(sketch_vector, topk)
+    return search_results
+
 
 @app.post("/combine_search")
 async def combine_search(request: Request):
@@ -106,6 +119,8 @@ async def combine_search(request: Request):
             result = await ocr_search(query=query, topk=topk)
         elif method == "asr":
             result = await asr_search(query=query, topk=topk)
+        elif method == "sketch":
+            result = await sketch_search(query=query, topk=topk)
         elif method == "object":
             object_body = {'query_input': query, 'topk': topk}
             result = await object_query(RequestMock(object_body))
@@ -129,36 +144,29 @@ async def combine_search(request: Request):
 
 @app.post("/rerank_search")
 async def rerank_search(request: Request):
-    try:
-        body = await request.json()
-        original_query = body.get('original_query') 
-        relevant_images = body['relevant_images']
-        irrelevant_images = body['irrelevant_images']
-        topk = body.get('topk', 10)
 
-        base_dir = '/mmlabworkspace/Students/visedit/AIC2023/Data/Reframe'
-        feats_dir = '/mmlabworkspace/Students/visedit/AIC2023/Features/Bvecs'
+    body = await request.json()
+    original_query = body.get('original_query')
+    relevant_images = body['relevant_images']
+    irrelevant_images = body['irrelevant_images']
+    topk = body.get('topk', 10)
 
-        full_relevant_images = [os.path.join(base_dir, image_path) for image_path in relevant_images]
-        full_irrelevant_images = [os.path.join(base_dir, image_path) for image_path in irrelevant_images]
-        
-        original_query_vector = blip_text_embedd(original_query) if original_query else None
-        relevant_vectors = [get_feature_vector(feats_dir, image_path) for image_path in full_relevant_images]
-        irrelevant_vectors = [get_feature_vector(feats_dir, image_path) for image_path in full_irrelevant_images]
-        relevant_vectors = [vec for vec in relevant_vectors if vec is not None]
-        irrelevant_vectors = [vec for vec in irrelevant_vectors if vec is not None]
-        
-        modified_query_vector = rerank_images.search(
-            original_query_vector,
-            relevant_vectors,
-            irrelevant_vectors,
-        )
-        reranked_results = vector_search_engine.search(modified_query_vector, topk)
-        return reranked_results
-    except Exception as e:
-        print(f"Error occurred in rerank_search: {e}")
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+    base_dir = '/mmlabworkspace/Students/visedit/AIC2023/Data/Reframe'
+    feats_dir = '/mmlabworkspace/Students/visedit/AIC2023/Features/Bvecs'
+    sketchs_dir = "/mmlabworkspace/Students/visedit/AIC2023/Features/Sketch"
+
+    def get_feature_vectors(images, directory):
+        return [vec for img in images if (vec := get_feature_vector(directory, os.path.join(base_dir, img))) is not None]
+
+    relevant_vectors = get_feature_vectors(relevant_images, sketchs_dir if original_query.startswith(("http://", "https://", "data:image/")) else feats_dir)
+    irrelevant_vectors = get_feature_vectors(irrelevant_images, sketchs_dir if original_query.startswith(("http://", "https://", "data:image/")) else feats_dir)
+    original_query_vector = sketch_embedd(original_query) if original_query.startswith(("http://", "https://", "data:image/")) else blip_text_embedd(original_query) if original_query else None
+    modified_query_vector = rerank_images.reformulate(original_query_vector, relevant_vectors, irrelevant_vectors)
+    search_engine = sketch_search_engine if original_query.startswith(("http://", "https://", "data:image/")) else vector_search_engine
+    reranked_results = search_engine.search(modified_query_vector, topk)
+    return reranked_results
+
+
     
 if __name__ == "__main__":
     uvicorn.run("backend:app", host="0.0.0.0", port=7777, reload=False)
