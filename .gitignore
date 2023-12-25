@@ -16,5 +16,4 @@ Evaluation/Flickr8K/
 JSON/
 ground_truth.json
 Backend/__pycache__/
-frontend/
 Utils/__pycache__/
