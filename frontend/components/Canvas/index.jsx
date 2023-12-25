@@ -16,7 +16,7 @@ const Canvas = () => {
   const [normalizedCoords, setNormalizedCoords] = useState([]);
   const [selectedLabel, setSelectedLabel] = useState(null);
 
-  const { updateCanvasData } = useResultData();
+  const { setCanvasData } = useResultData();
 
   // display grid background on the canvas
   const drawRuleOfThirdsGrid = useCallback(() => {
@@ -147,13 +147,13 @@ const Canvas = () => {
     setNormalizedCoords(prev => [...prev, normalized])
     setInitialCoords(INIT_COORDS);
     setFinalCoords(INIT_COORDS);
-    updateCanvasData(prev => [...prev, normalized]);
+    setCanvasData(prev => [...prev, normalized]);
   }, [initialCoords, finalCoords, selectionBoxes.length, selectedLabel, colors]);
 
   const clearSelection = () => {
     setSelectionBoxes([]);
     setNormalizedCoords([]);
-    updateCanvasData([]);
+    setCanvasData([]);
   };
 
   const CtrlZ = () => {
