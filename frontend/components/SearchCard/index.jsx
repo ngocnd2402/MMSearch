@@ -1,7 +1,9 @@
 import React, { useState, useCallback } from "react";
 import { useResultData } from "@/context/provider";
+import Canvas from "../Canvas";
 import { HOST_URL } from "@/constants/api";
 
+// const Autocomplete = React.lazy(() => import('@mui/material/Autocomplete'));
 const TextField = React.lazy(() => import('@mui/material/TextField'));
 
 const SearchCard = ({ topk }) => {
@@ -16,7 +18,9 @@ const SearchCard = ({ topk }) => {
   // State for redo action
   const [redoStack, setRedoStack] = useState([]); 
 
-  const { setResultData, setQuery } = useResultData();
+  // const [object, setObject] = useState([]);
+
+  const { setResultData, setQuery, canvasData, setCanvasData } = useResultData();
 
   // Make the button activate when clicked
   const handleButtonClick = useCallback((buttonType) => {
@@ -46,8 +50,10 @@ const SearchCard = ({ topk }) => {
     setActiveButtons(prevActiveButtons => new Set([...prevActiveButtons].filter(activeType => activeType !== type)));
     if (type === "query") {
       setQuery("")
+    } else if (type === "object") {
+      setCanvasData([])
     }
-  }, []);
+  }, [setCanvasData]);
 
   // Update value when changed an input query 
   const handleInputChange = useCallback((index, e) => {
@@ -95,6 +101,7 @@ const SearchCard = ({ topk }) => {
     setRedoStack([]);
     setActiveButtons(new Set(["query"]));
     setResultData(null)
+    setCanvasData([])
   };
 
   // Logic to fetch result from API
@@ -149,14 +156,22 @@ const SearchCard = ({ topk }) => {
 
   // Handle when clicked submit button
   const handleSubmit = async () => {
+
     // Construct the query values for the search
     const queryValues = inputValues.filter(obj => obj.value !== "");
+
+    // Check if 'object' search is active and canvasData is not empty
+    if (activeButtons.has("object") && canvasData.length > 0) {
+      queryValues.push({ type: "object", value: canvasData });
+    }
 
     // Proceed with the search if there are valid query values
     if (queryValues.some(data => data.value !== "")) {
       await fetchResults(queryValues);
     }
   };
+
+  const showCanvas = activeButtons.has("object");
 
   return (
     <div className="flex flex-col gap-2 bg-white p-4 rounded-lg">
@@ -208,6 +223,14 @@ const SearchCard = ({ topk }) => {
             </div>
           </div>
         ))}
+        {showCanvas &&
+          <div className="relative pt-2">
+            <button onClick={() => handleCloseClick("object")} className="absolute top-0 right-0 cursor-pointer">
+              &times;
+            </button>
+            <Canvas />
+          </div>
+        }
         <button onClick={handleSubmit} className="bg-blue-600 text-white p-3 rounded-full mt-2 hover:bg-blue-700">Search</button>
       </div>
     </div>
