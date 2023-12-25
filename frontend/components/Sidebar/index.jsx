@@ -1,14 +1,17 @@
 "use client";
 
+import axios from 'axios';
 import Logos from "./Logos";
 import React, { useState, useRef } from "react";
 import SearchCard from "../SearchCard";
 import { useResultData } from "@/context/provider";
+import { HOST_URL } from "@/constants/api";
 import Slider from '@mui/material/Slider';
 import { blue } from "@mui/material/colors";
+import Reranking from "../Reranking";
 
 const Sidebar = () => {
-  const { topK, setTopK, setResultData, query } = useResultData();
+  const { topK, setTopK, setResultData, relevantImages, removeRelevantImage, irrelevantImages, removeIrrelevantImage, query, sketchData, setRelevantImages, setIrrelevantImages } = useResultData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImageSrc, setModalImageSrc] = useState("");
 
@@ -35,6 +38,29 @@ const Sidebar = () => {
       closeModal();
     }
   };
+
+  const handleReranking = async () => {
+    const requestData = {
+      original_query: sketchData || query,
+      relevant_images: relevantImages,
+      irrelevant_images: irrelevantImages,
+      topk: topK
+    };
+
+    try {
+      const response = await axios.post(`${HOST_URL}rerank_search`, requestData, { headers: { "Content-Type": "application/json" } });
+      setResultData(response.data);
+    } catch (error) {
+      console.error('Error during reranking:', error);
+    }
+  }
+
+  const isReranking = relevantImages.length === 0 && irrelevantImages.length === 0;
+
+  const handleClear = () => {
+    setRelevantImages([]);
+    setIrrelevantImages([]);
+  }
 
   return (
     <>
@@ -74,6 +100,22 @@ const Sidebar = () => {
               />
             </div>
             <SearchCard topk={topK} />
+            <div className="flex flex-col gap-2 bg-white p-4 rounded-lg">
+              <div className='flex'>
+                <button className='text-xs font-medium text-blue-700' onClick={handleClear}>
+                  Clear
+                </button>
+              </div>
+              <Reranking
+                relevantImages={relevantImages}
+                removeRelevantImage={removeRelevantImage}
+                irrelevantImages={irrelevantImages}
+                removeIrrelevantImage={removeIrrelevantImage}
+                handleImageClick={handleImageClick}
+                handleClear={handleClear}
+              />
+              <button className="bg-blue-600 text-white p-3 rounded-full mt-2 hover:bg-blue-700" disabled={isReranking} onClick={handleReranking}>Reranking</button>
+            </div>
           </div>
         </div>
       </aside>
