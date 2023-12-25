@@ -2,8 +2,8 @@ import React, { useState, useCallback } from "react";
 import { useResultData } from "@/context/provider";
 import Canvas from "../Canvas";
 import { HOST_URL } from "@/constants/api";
+import Sketch from "../Sketch";
 
-// const Autocomplete = React.lazy(() => import('@mui/material/Autocomplete'));
 const TextField = React.lazy(() => import('@mui/material/TextField'));
 
 const SearchCard = ({ topk }) => {
@@ -18,9 +18,12 @@ const SearchCard = ({ topk }) => {
   // State for redo action
   const [redoStack, setRedoStack] = useState([]); 
 
+  // State for handling using sketch
+  const [sketchCanvasRef, setSketchCanvasRef] = useState(null);
+
   // const [object, setObject] = useState([]);
 
-  const { setResultData, setQuery, canvasData, setCanvasData } = useResultData();
+  const { setResultData, canvasData, setCanvasData, setQuery, setSketchData } = useResultData();
 
   // Make the button activate when clicked
   const handleButtonClick = useCallback((buttonType) => {
@@ -52,8 +55,10 @@ const SearchCard = ({ topk }) => {
       setQuery("")
     } else if (type === "object") {
       setCanvasData([])
+    } else if (type === "sketch") {
+      setSketchData("")
     }
-  }, [setCanvasData]);
+  }, []);
 
   // Update value when changed an input query 
   const handleInputChange = useCallback((index, e) => {
@@ -156,6 +161,24 @@ const SearchCard = ({ topk }) => {
 
   // Handle when clicked submit button
   const handleSubmit = async () => {
+    let updatedSketchData = null;
+
+    // Export the sketch data and update the sketchData state
+    if (showSketchCanvas && sketchCanvasRef && sketchCanvasRef.current) {
+      try {
+        const imageData = await sketchCanvasRef.current.exportImage("jpeg");
+        updatedSketchData = imageData; // Temporarily store the updated sketch data
+        console.log(imageData);
+      } catch (e) {
+        console.error(e);
+        return;
+      }
+    }
+
+    // Update the sketchData state
+    if (updatedSketchData) {
+      setSketchData(updatedSketchData);
+    }
 
     // Construct the query values for the search
     const queryValues = inputValues.filter(obj => obj.value !== "");
@@ -165,6 +188,11 @@ const SearchCard = ({ topk }) => {
       queryValues.push({ type: "object", value: canvasData });
     }
 
+    // Use the updated sketch data for the search
+    if (activeButtons.has("sketch") && updatedSketchData !== null) {
+      queryValues.push({ type: "sketch", value: updatedSketchData });
+    }
+
     // Proceed with the search if there are valid query values
     if (queryValues.some(data => data.value !== "")) {
       await fetchResults(queryValues);
@@ -172,6 +200,7 @@ const SearchCard = ({ topk }) => {
   };
 
   const showCanvas = activeButtons.has("object");
+  const showSketchCanvas = activeButtons.has("sketch");
 
   return (
     <div className="flex flex-col gap-2 bg-white p-4 rounded-lg">
@@ -189,7 +218,7 @@ const SearchCard = ({ topk }) => {
             Reset
           </button>
         </div>
-        <div className="grid grid-cols-3 gap-2 text-gray-900">
+        <div className="grid grid-cols-3 gap-3 text-gray-900 mb-2">
           {["query", "ocr", "asr", "object", "sketch"].map((type) => (
             <div
               key={type}
@@ -229,6 +258,14 @@ const SearchCard = ({ topk }) => {
               &times;
             </button>
             <Canvas />
+          </div>
+        }
+        {showSketchCanvas &&
+          <div className="relative pt-5">
+            <button onClick={() => handleCloseClick("sketch")} className="absolute top-0 right-0 cursor-pointer">
+              &times;
+            </button>
+            <Sketch setCanvasRef={setSketchCanvasRef} />
           </div>
         }
         <button onClick={handleSubmit} className="bg-blue-600 text-white p-3 rounded-full mt-2 hover:bg-blue-700">Search</button>
