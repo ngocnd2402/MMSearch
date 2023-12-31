@@ -1,7 +1,7 @@
 from initialize import *
 
 app = FastAPI(
-    title="InferaSearch - MMLAB",
+    title="MMSearch - MMLAB",
     description="This is the API we are using at HCMC AI Challenge, please do not use for other purposes.",
 )
 
