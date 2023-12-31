@@ -1,17 +1,15 @@
 "use client";
 
-import axios from 'axios';
 import Logos from "./Logos";
 import React, { useState, useRef } from "react";
 import SearchCard from "../SearchCard";
 import { useResultData } from "@/context/provider";
 import { HOST_URL } from "@/constants/api";
 import Slider from '@mui/material/Slider';
-import { blue } from "@mui/material/colors";
 import Reranking from "../Reranking";
 
 const Sidebar = () => {
-  const { topK, setTopK, setResultData, query, relevantImages, removeRelevantImage, irrelevantImages, removeIrrelevantImage, sketchData, setRelevantImages, setIrrelevantImages } = useResultData();
+  const { topK, setTopK, setResultData, relevantImages, removeRelevantImage, irrelevantImages, removeIrrelevantImage, query, sketchData, setRelevantImages, setIrrelevantImages } = useResultData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImageSrc, setModalImageSrc] = useState("");
 
@@ -45,11 +43,21 @@ const Sidebar = () => {
       relevant_images: relevantImages,
       irrelevant_images: irrelevantImages,
       topk: topK
-    };
+    }
 
     try {
-      const response = await axios.post(`${HOST_URL}rerank_search`, requestData, { headers: { "Content-Type": "application/json" } });
-      setResultData(response.data);
+      const response = await fetch(`${HOST_URL}rerank_search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to rerank search results.');
+      }
+
+      const resultData = await response.json();
+      setResultData(resultData);
     } catch (error) {
       console.error('Error during reranking:', error);
     }
@@ -64,13 +72,13 @@ const Sidebar = () => {
 
   return (
     <>
-      <aside className="z-40 w-1/3 h-screen transition-transform -translate-x-full sm:translate-x-0 bg-blue-100 mx-2">
+      <aside className="z-40 w-1/4 h-screen transition-transform -translate-x-full sm:translate-x-0 bg-blue-100 mx-2">
         <div className="h-full overflow-y-auto">
-          <div className="flex justify-center mt-2">
+          <div className="flex justify-center mb-1">
             <Logos />
           </div>
           <div className="flex flex-col gap-2">
-            <div className="flex flex-col gap-1 px-4">
+            <div className="flex flex-col gap-1">
               <div className="flex flex-row gap-2 justify-between items-center">
                 <label
                   htmlFor="topk"
@@ -92,11 +100,10 @@ const Sidebar = () => {
                 id="topk"
                 value={topK}
                 onChange={handleTopKChange}
+                className="text-blue-600 text-xs w-full"
+                color="secondary"
                 max={500}
                 min={1}
-                sx={{
-                  color: blue,
-                }}
               />
             </div>
             <SearchCard topk={topK} />
@@ -117,7 +124,6 @@ const Sidebar = () => {
               <button className="bg-blue-600 text-white p-3 rounded-full mt-2 hover:bg-blue-700" disabled={isReranking} onClick={handleReranking}>Reranking</button>
             </div>
           </div>
-          {/* Add new feature here */}
         </div>
       </aside>
       {isModalOpen && (

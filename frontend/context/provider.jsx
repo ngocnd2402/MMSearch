@@ -9,12 +9,14 @@ export const ResultDataProvider = ({ children }) => {
   const [relevantImages, setRelevantImages] = useState([]);
   const [irrelevantImages, setIrrelevantImages] = useState([]);
   const [canvasData, setCanvasData] = useState([]);
+  const [sketchData, setSketchData] = useState("");
   const [query, setQuery] = useState(null);
+  const [topK, setTopK] = useState(80);
 
   const addRelevantImage = (image) => {
     setRelevantImages(prev => [...prev, image]);
   };
-
+  
   const removeRelevantImage = (image) => {
     setRelevantImages(prev => prev.filter(img => img !== image));
   };
@@ -28,7 +30,7 @@ export const ResultDataProvider = ({ children }) => {
   }
 
   return (
-    <ResultDataContext.Provider value={{ resultData, setResultData, query, setQuery, relevantImages, setRelevantImages, addRelevantImage, removeRelevantImage, irrelevantImages, setIrrelevantImages, addIrrelevantImage, removeIrrelevantImage, canvasData, updateCanvasData }}>
+    <ResultDataContext.Provider value={{ resultData, setResultData, relevantImages, setRelevantImages, addRelevantImage, removeRelevantImage, irrelevantImages, setIrrelevantImages, addIrrelevantImage, removeIrrelevantImage, canvasData, setCanvasData, sketchData, setSketchData, query, setQuery, topK, setTopK }}>
       {children}
     </ResultDataContext.Provider>
   );
