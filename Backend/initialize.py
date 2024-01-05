@@ -4,6 +4,8 @@ from faiss_class import (
     SketchEmbedding,
     VectorIndexer,
     VectorSearchEngine,
+    PoseIndexer,
+    PoseSearchEngine,
     RerankImages
 )
 from meili import Meilisearch
@@ -22,6 +24,7 @@ from math import ceil, floor
 import asyncio
 import numpy as np
 import csv
+import json
 from natsort import natsorted
 from fastapi import File, UploadFile, Form, HTTPException
 from fastapi.param_functions import File
@@ -37,13 +40,16 @@ MAPFRAME_PATH = "Data/Mapframe"
 METADATA_PATH = "Data/Metadata"
 FEATURES_PATH = "Features/Bvecs"
 SKETCH_PATH = "Features/Sketch"
+POSE_PATH = "Features/Pvecs"
 frontend_mapping_folder = "Data/Mapframe"
 inverted_file = "JSON/inverted_file.json"
 
 vector_indexer = VectorIndexer(FEATURES_PATH, KEYFRAME_PATH)
 sketch_indexer = VectorIndexer(SKETCH_PATH, KEYFRAME_PATH)
+pose_indexer = PoseIndexer(POSE_PATH)
 vector_search_engine = VectorSearchEngine(vector_indexer)
 sketch_search_engine = VectorSearchEngine(sketch_indexer)
+pose_search_engine = PoseSearchEngine(pose_indexer)
 ocr_search_engine = Meilisearch('OCR')
 asr_search_engine = Meilisearch('ASR')
 obj_search_engine = ObjectRetrieval(inverted_file)
@@ -76,3 +82,15 @@ def get_feature_vector(feats_dir, image_path):
         return np.load(feat_path)[position]
     else:
         return None
+
+def calculate_relative_distances(vector):
+    num_points = len(vector) // 2
+    distances = []
+    for i in range(1, num_points):
+        pivot_x, pivot_y = vector[0], vector[1]
+        current_x, current_y = vector[i * 2], vector[i * 2 + 1]
+        distances.extend([abs(current_x - pivot_x), abs(current_y - pivot_y)])
+        for j in range(1, i):
+            prev_x, prev_y = vector[j * 2], vector[j * 2 + 1]
+            distances.extend([abs(current_x - prev_x), abs(current_y - prev_y)])
+    return np.array(distances)

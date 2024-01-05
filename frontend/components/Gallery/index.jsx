@@ -234,8 +234,8 @@ const Gallery = () => {
   };
 
   return (
-    <div className='w-3/4 flex flex-col h-screen justify-between bg-blue-100'>
-      <div className="grid grid-cols-8 overflow-y-auto flex-grow-0" style={{ maxHeight: `${Math.min(100 * 7 / 8, 100)}vh` }}>
+    <div className='w-2/3 flex flex-col h-screen justify-between bg-blue-100'>
+      <div className="grid grid-cols-4 overflow-y-auto flex-grow-0" style={{ maxHeight: `${Math.min(100 * 7 / 8, 100)}vh` }}>
         {resultData && resultData.map((item, index) => (
           <div key={index} className="relative">
             <img
