@@ -1,7 +1,7 @@
 from initialize import *
 
 app = FastAPI(
-    title="MMSearch - MMLAB",
+    title="InferaSearch - MMLAB",
     description="This is the API we are using at HCMC AI Challenge, please do not use for other purposes.",
 )
 
@@ -28,7 +28,7 @@ class RequestMock:
 async def index():
     return HTMLResponse(content="<h1>InferaSearch API</h1><p>Welcome to the InferaSearch MMLAB API.</p>")
 
-@app.post("/query_search")
+@app.post("/semantic_search")
 async def blip_search(query: str = Form(...), topk: int = Form(...)):
     print("Received query:", query) 
     text_feat_arr = blip_text_embedd(query)
@@ -37,8 +37,8 @@ async def blip_search(query: str = Form(...), topk: int = Form(...)):
 
 @app.post("/image_search")
 async def image_search(image_path: str = Form(...), topk: int = Form(...)):
-    base_dir = '/mmlabworkspace/Students/visedit/AIC2023/Data/Reframe'
-    feats_dir = '/mmlabworkspace/Students/visedit/AIC2023/Features/Bvecs'
+    base_dir = '/home/visedit/WorkingSpace/AIC2023/Data/Reframe'
+    feats_dir = '/home/visedit/WorkingSpace/AIC2023/Features/Bvecs'
     img_path = f'{base_dir}/{image_path}'
     image_feat_arr = get_feature_vector(feats_dir, img_path)
     topk_results = vector_search_engine.search(image_feat_arr, topk)
@@ -83,6 +83,11 @@ async def asr_search(query: str = Form(...), topk: int = Form(...)):
     final_results = formatted_results[:topk]
     return final_results
 
+@app.post("/sketch_search")
+async def sketch_search(query: str = Form(...), topk: int = Form(...)):
+    sketch_vector = sketch_embedd(query)
+    search_results = sketch_search_engine.search(sketch_vector, topk)
+    return search_results
 
 @app.post("/object_search")
 async def object_query(request: Request):
@@ -92,12 +97,13 @@ async def object_query(request: Request):
     results = obj_search_engine.search_image(query_input, topk)
     return results
 
-@app.post("/sketch_search")
-async def sketch_search(query: str = Form(...), topk: int = Form(...)):
-    sketch_vector = sketch_embedd(query)
-    search_results = sketch_search_engine.search(sketch_vector, topk)
-    return search_results
-
+@app.post("/pose_search")
+async def pose_search(request: Request):
+    body = await request.json()
+    query_input = body['query_input']
+    topk = body.get('topk', 10)
+    pose_search_results = pose_search_engine.search(query_input, topk)
+    return pose_search_results
 
 @app.post("/combine_search")
 async def combine_search(request: Request):
@@ -151,9 +157,9 @@ async def rerank_search(request: Request):
     irrelevant_images = body['irrelevant_images']
     topk = body.get('topk', 10)
 
-    base_dir = '/mmlabworkspace/Students/visedit/AIC2023/Data/Reframe'
-    feats_dir = '/mmlabworkspace/Students/visedit/AIC2023/Features/Bvecs'
-    sketchs_dir = "/mmlabworkspace/Students/visedit/AIC2023/Features/Sketch"
+    base_dir = '/home/visedit/WorkingSpace/AIC2023/Data/Reframe'
+    feats_dir = '/home/visedit/WorkingSpace/AIC2023/Features/Bvecs'
+    sketchs_dir = '/home/visedit/WorkingSpace/AIC2023/Features/Sketch'
 
     def get_feature_vectors(images, directory):
         return [vec for img in images if (vec := get_feature_vector(directory, os.path.join(base_dir, img))) is not None]
@@ -167,6 +173,5 @@ async def rerank_search(request: Request):
     return reranked_results
 
 
-    
 if __name__ == "__main__":
     uvicorn.run("backend:app", host="0.0.0.0", port=7777, reload=False)

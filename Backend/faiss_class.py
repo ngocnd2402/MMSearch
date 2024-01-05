@@ -15,7 +15,7 @@ from io import BytesIO
 import base64
 from towhee import pipe, ops
 import sys 
-sys.path.append('/mmlabworkspace/Students/visedit/AIC2023/Sketch_LVM')
+sys.path.append('/home/visedit/WorkingSpace/AIC2023/Sketch_LVM')
 from src.model_LN_prompt import Model
 from torchvision import transforms
     
@@ -58,7 +58,7 @@ class BlipImageEmbedding:
         return image_vec   
 
 class SketchEmbedding:
-    def __init__(self, device="cuda", CKPT_PATH="/mmlabworkspace/Students/visedit/AIC2023/Sketch_LVM/saved_models/LN_prompt/last.ckpt"):
+    def __init__(self, device="cuda", CKPT_PATH="Sketch_LVM/saved_models/LN_prompt/last.ckpt"):
         self.device = device
         self.model = Model()
         self.model_checkpoint = torch.load(CKPT_PATH, map_location=self.device)
@@ -125,7 +125,6 @@ class VectorIndexer:
         photo_features = None
         return index, video_frame_mapping
 
-
 class VectorSearchEngine:
     def __init__(self, indexer: VectorIndexer):
         self.indexer = indexer
@@ -142,6 +141,74 @@ class VectorSearchEngine:
             }
             for i, index in enumerate(indices[0]) if index in video_frame_mapping
         ]
+
+
+class PoseIndexer:
+    def __init__(self, features_path: str):
+        self.index, self.pose_frame_mapping = self.indexing_methods(features_path)
+
+    def indexing_methods(self, features_path: str) -> faiss.Index:
+        pose_feature_list = []
+        pose_frame_mapping = {}
+
+        for batch_folder in tqdm(os.listdir(features_path)):
+            batch_path = os.path.join(features_path, batch_folder)
+
+            for video_folder in os.listdir(batch_path):
+                video_path = os.path.join(batch_path, video_folder)
+
+                for frame_npy in os.listdir(video_path):
+                    frame_path = os.path.join(video_path, frame_npy)
+                    if os.path.isfile(frame_path) and frame_path.endswith('.npy'):
+                        frame_vectors = np.load(frame_path)
+                        for vec in frame_vectors:
+                            pose_feature_list.append(vec)
+                            frame_path_jpg = frame_path.replace('.npy', '.jpg').split('/')[-3:]
+                            frame_path_jpg = "/".join(frame_path_jpg)
+                            pose_frame_mapping[len(pose_feature_list) - 1] = frame_path_jpg
+
+        pose_features = np.vstack(pose_feature_list).astype('float32')
+        index = faiss.IndexFlatL2(pose_features.shape[1])
+        index.add(pose_features)
+        return index, pose_frame_mapping
+
+class PoseSearchEngine:
+    def __init__(self, indexer: PoseIndexer):
+        self.indexer = indexer
+
+    @staticmethod
+    def calculate_relative_distances(vector):
+        num_points = len(vector) // 2
+        distances = []
+        angles = []
+
+        for i in range(1, num_points):
+            pivot_x, pivot_y = vector[0], vector[1]
+            current_x, current_y = vector[i * 2], vector[i * 2 + 1]
+            distances.extend([current_x - pivot_x, current_y - pivot_y])
+
+            for j in range(1, i):
+                prev_x, prev_y = vector[j * 2], vector[j * 2 + 1]
+                distances.extend([current_x - prev_x, current_y - prev_y])
+                angle = np.arctan2(current_y - prev_y, current_x - prev_x)
+                angles.append(angle)
+
+        return np.concatenate([distances, angles])
+
+    def search(self, query_list: List[float], topk: int) -> List[Dict]:
+        query_arr = np.array(query_list, dtype='float32')
+        relative_query_arr = self.calculate_relative_distances(query_arr).reshape(1, -1)
+        index, pose_frame_mapping = self.indexer.index, self.indexer.pose_frame_mapping
+        distances, indices = index.search(relative_query_arr, topk)
+
+        return [
+            {
+                "frame": pose_frame_mapping.get(index),
+                "distance": float(distances[0][i])
+            }
+            for i, index in enumerate(indices[0]) if index in pose_frame_mapping
+        ]
+
 
 class RerankImages:
     def __init__(self, alpha: float, beta: float, gamma: float):
