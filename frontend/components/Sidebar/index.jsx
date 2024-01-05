@@ -2,9 +2,9 @@
 
 import Logos from "./Logos";
 import React, { useState, useRef } from "react";
-import SearchCard from "../SearchCard";
 import { useResultData } from "@/context/provider";
 import { HOST_URL } from "@/constants/api";
+import SearchCard from "../SearchCard";
 import Slider from '@mui/material/Slider';
 import Reranking from "../Reranking";
 
@@ -72,10 +72,11 @@ const Sidebar = () => {
 
   return (
     <>
-      <aside className="z-40 w-1/4 h-screen transition-transform -translate-x-full sm:translate-x-0 bg-blue-100 mx-2">
+      <aside className="z-40 w-1/3 h-screen transition-transform -translate-x-full sm:translate-x-0 bg-blue-100 mx-2">
         <div className="h-full overflow-y-auto">
           <div className="flex justify-center mb-1">
-            <Logos />
+            {/* <Logos /> */}
+            <p className="text-sm font-bold p-2 bg-white rounded-full text-blue-700">MMSearch</p>
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-1">
@@ -101,7 +102,7 @@ const Sidebar = () => {
                 value={topK}
                 onChange={handleTopKChange}
                 className="text-blue-600 text-xs w-full"
-                color="secondary"
+                color="primary"
                 max={500}
                 min={1}
               />

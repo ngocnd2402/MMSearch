@@ -1,29 +1,31 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { useResultData } from "@/context/provider";
-import Canvas from "../Canvas";
 import { HOST_URL } from "@/constants/api";
+import Canvas from "../Canvas";
 import Sketch from "../Sketch";
+import Pose from "../Pose";
 
 const TextField = React.lazy(() => import('@mui/material/TextField'));
 
 const SearchCard = ({ topk }) => {
   // State for clicked methods
-  const [activeButtons, setActiveButtons] = useState(new Set(["query"])); 
+  const [activeButtons, setActiveButtons] = useState(new Set(["semantic"]));
 
   // State for storing user input with type and value
   const [inputValues, setInputValues] = useState([
-    { type: "query", value: "" },
-  ]); 
+    { type: "semantic", value: null },
+  ]);
 
   // State for redo action
-  const [redoStack, setRedoStack] = useState([]); 
+  const [redoStack, setRedoStack] = useState([]);
 
   // State for handling using sketch
   const [sketchCanvasRef, setSketchCanvasRef] = useState(null);
 
-  // const [object, setObject] = useState([]);
+  // Ref for the file input
+  const fileInputRef = useRef();
 
-  const { setResultData, canvasData, setCanvasData, setQuery, setSketchData } = useResultData();
+  const { setResultData, canvasData, setCanvasData, setQuery, sketchData, setSketchData, poseData, setPoseData } = useResultData();
 
   // Make the button activate when clicked
   const handleButtonClick = useCallback((buttonType) => {
@@ -51,12 +53,14 @@ const SearchCard = ({ topk }) => {
   const handleCloseClick = useCallback((type) => {
     setInputValues(prevInputValues => prevInputValues.filter(input => input.type !== type));
     setActiveButtons(prevActiveButtons => new Set([...prevActiveButtons].filter(activeType => activeType !== type)));
-    if (type === "query") {
+    if (type === "semantic") {
       setQuery("")
     } else if (type === "object") {
       setCanvasData([])
     } else if (type === "sketch") {
-      setSketchData("")
+      setSketchData("");
+    } else if (type === "pose") {
+      setPoseData([])
     }
   }, []);
 
@@ -66,7 +70,7 @@ const SearchCard = ({ topk }) => {
       const newInputValues = [...prevInputValues];
       newInputValues[index].value = e.target.value;
 
-      if (newInputValues[index].type === "query") {
+      if (newInputValues[index].type === "semantic") {
         setQuery(e.target.value);
       }
 
@@ -102,9 +106,9 @@ const SearchCard = ({ topk }) => {
   // Reset all input query to the beginning (only use text query)
   const handleReset = (e) => {
     e.preventDefault();
-    setInputValues([{ type: "query", value: "" }]);
+    setInputValues([{ type: "semantic", value: "" }]);
     setRedoStack([]);
-    setActiveButtons(new Set(["query"]));
+    setActiveButtons(new Set(["semantic"]));
     setResultData(null)
     setCanvasData([])
   };
@@ -121,17 +125,16 @@ const SearchCard = ({ topk }) => {
       const { type, value } = queryValues[0];
       apiEndpoint += `${type}_search`;
 
-      if (type === "object") {
-        // For object search, use JSON request body
-        requestBody = JSON.stringify({ query_input: value.map(coord => ({ ...coord })), topk });
+      if (type === "object" || type === "pose") {
+        requestBody = JSON.stringify({ query_input: type === "pose" ? value : value.map(coord => ({ ...coord })), topk });
         headers = { "Content-Type": "application/json" };
       } else {
-        // For other types, use FormData
         requestBody = new FormData();
         requestBody.append("query", value);
         requestBody.append("topk", topk);
       }
     } else {
+      // Combine search type handling
       apiEndpoint += "combine_search";
       requestBody = JSON.stringify({
         query: queryValues.map(q => q.value),
@@ -159,27 +162,20 @@ const SearchCard = ({ topk }) => {
     }
   };
 
+  // Handle file change for the sketch upload
+  const handleSketchUpload = useCallback((e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setSketchData(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, []);
+
   // Handle when clicked submit button
   const handleSubmit = async () => {
-    let updatedSketchData = null;
-
-    // Export the sketch data and update the sketchData state
-    if (showSketchCanvas && sketchCanvasRef && sketchCanvasRef.current) {
-      try {
-        const imageData = await sketchCanvasRef.current.exportImage("jpeg");
-        updatedSketchData = imageData; // Temporarily store the updated sketch data
-        console.log(imageData);
-      } catch (e) {
-        console.error(e);
-        return;
-      }
-    }
-
-    // Update the sketchData state
-    if (updatedSketchData) {
-      setSketchData(updatedSketchData);
-    }
-
     // Construct the query values for the search
     const queryValues = inputValues.filter(obj => obj.value !== "");
 
@@ -188,9 +184,18 @@ const SearchCard = ({ topk }) => {
       queryValues.push({ type: "object", value: canvasData });
     }
 
-    // Use the updated sketch data for the search
-    if (activeButtons.has("sketch") && updatedSketchData !== null) {
-      queryValues.push({ type: "sketch", value: updatedSketchData });
+    if (activeButtons.has("sketch")) {
+      if (sketchData) {
+        queryValues.push({ type: "sketch", value: sketchData });
+      } else if (sketchCanvasRef && sketchCanvasRef.current) {
+        const drawnSketchData = await sketchCanvasRef.current.exportImage("jpeg");
+        console.log(drawnSketchData);
+        queryValues.push({ type: "sketch", value: drawnSketchData });
+      }
+    }
+
+    if (activeButtons.has("pose") && poseData && poseData.length > 0) {
+      queryValues.push({ type: "pose", value: poseData });
     }
 
     // Proceed with the search if there are valid query values
@@ -199,8 +204,40 @@ const SearchCard = ({ topk }) => {
     }
   };
 
+  // const handleFilter = async () => {
+  //   console.log(object)
+  //   const requestBody = JSON.stringify({ object: object });
+  //   try {
+  //     const response = await fetch(`${HOST_URL}filter`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json'
+  //       },
+  //       body: requestBody
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
+
+  //     const result = await response.json();
+  //     console.log('Filter results:', result);
+  //   } catch (error) {
+  //     console.error('Error during fetch:', error);
+  //   }
+  // }
+
   const showCanvas = activeButtons.has("object");
   const showSketchCanvas = activeButtons.has("sketch");
+  const showPose = activeButtons.has("pose");
+
+  // Function to clear the uploaded sketch
+  const handleClearUploadedSketch = useCallback(() => {
+    setSketchData("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";  // Reset the file input
+    }
+  }, []);
 
   return (
     <div className="flex flex-col gap-2 bg-white p-4 rounded-lg">
@@ -218,11 +255,11 @@ const SearchCard = ({ topk }) => {
             Reset
           </button>
         </div>
-        <div className="grid grid-cols-3 gap-3 text-gray-900 mb-2">
-          {["query", "ocr", "asr", "object", "sketch"].map((type) => (
+        <div className="grid grid-cols-6 gap-2 text-gray-900">
+          {["semantic", "ocr", "asr", "object", "sketch", "pose"].map((type) => (
             <div
               key={type}
-              className={`col-start self-stretch p-2 text-center rounded-md text-xs font-medium cursor-pointer ${inputValues.some((input) => input.type === type)
+              className={`col-start self-stretch px-1 py-2 text-center rounded-md text-xs font-medium cursor-pointer ${inputValues.some((input) => input.type === type)
                 ? "bg-blue-600 text-white"
                 : "bg-blue-100"
                 }`}
@@ -244,6 +281,7 @@ const SearchCard = ({ topk }) => {
                 value={input.value}
                 onChange={(e) => handleInputChange(index, e)}
                 placeholder={input.type}
+                color="primary"
                 className="w-full text-xs rounded-md text-gray-900 border border-blue-600 focus:border-2 mt-2"
               />
               <button onClick={() => handleCloseClick(input.type)} className="absolute top-0 right-0 mt-3 mr-2 text-sm">
@@ -265,7 +303,31 @@ const SearchCard = ({ topk }) => {
             <button onClick={() => handleCloseClick("sketch")} className="absolute top-0 right-0 cursor-pointer">
               &times;
             </button>
-            <Sketch setCanvasRef={setSketchCanvasRef} />
+            {!sketchData && (
+              <Sketch setCanvasRef={setSketchCanvasRef} />
+            )}
+            {sketchData && (
+              <img src={sketchData} className="w-full h-auto" alt="Uploaded" />
+            )}
+            <div className="flex justify-between gap-2 mt-2 items-end">
+              <div className="w-full">
+                <label htmlFor="sketchUpload" className="text-sm font-medium text-gray-700 mb-1">Upload sketch</label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  id="sketchUpload"
+                  accept="image/*"
+                  onChange={handleSketchUpload}
+                  className="block w-full text-sm text-gray-900 rounded-md border border-gray-300 cursor-pointer focus:border-blue-500"
+                />
+              </div>
+              <button
+                onClick={handleClearUploadedSketch}
+                className="bg-red-500 text-white text-xs p-1.5 rounded-md hover:bg-red-600"
+              >
+                Clear
+              </button>
+            </div>
           </div>
         }
         <button onClick={handleSubmit} className="bg-blue-600 text-white p-3 rounded-full mt-2 hover:bg-blue-700">Search</button>
