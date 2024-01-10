@@ -55,7 +55,7 @@ Next, for audio retrieval purposes, extract audio in MP3 format from the video d
 ```bash
 python preprocessing/cut_audio.py
 ```
-To help you get the accurate frame positioning in the videos by creating a mapping dataset with details such as frame number, timestamp, etc, ... using the following command:
+Generate mapping metadata with key details like frame numbers and timestamps to accurately position frames in videos for many purpose. Execute the following command:
 ```bash
 python preprocessing/make_mapping.py
 ```
