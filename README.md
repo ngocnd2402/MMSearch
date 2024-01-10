@@ -13,6 +13,29 @@ We offer a web-based application for managing the MMSearch tool:
 * Frontend: [Next.js](https://nextjs.org/)
 * Backend: [FastAPI](https://fastapi.tiangolo.com/)
 
+## Suggested Folder Structure
+
+The following structure is recommended for organizing the various components of the MMSearch system:
+- `root`
+  - `backend`
+    - `module`
+      - `semantic`
+      - `ocr`
+      - `asr`
+      - `object`
+      - `sketch`
+      - `pose`
+  - `frontend`
+  - `features`
+    - `bvecs`
+    - `pvecs`
+    - `sketch`
+  - `json`
+  - `data`
+    - `keyframe`
+    - `metadata`
+    - `mapping`
+
 ## Getting Started
 ### Requirements
 * [Anaconda](https://www.anaconda.com/download)
