@@ -34,6 +34,8 @@ The following structure is recommended for organizing the various components of 
   - `data` - This includes the keyframe database following the preprocessing of the video data and its metadata.
     - `keyframe`
     - `mapping`
+    - `video`
+    - `audio`
 
 ## Getting Started
 ### Requirements
@@ -61,32 +63,41 @@ python preprocessing/make_mapping.py
 
 ### Build & Run Each Component
 1. Semantic-based Module
-Commencing the process, we employ the BLIP image encoder to derive precise visual feature vectors for every image within the keyframe database. These vectors are subsequently stored in the .np format through the execution of the following command:
+Navigate to the semantic module directory:
 ```bash
-python backend/module/semantic/getBlipFeat.py
+cd backend/module/semantic
 ```
-After this process, you will obtain a database vector containing distinctive features for each image in the keyframe database.
-2. OCR-based Module
-In this module, we use DBNET in mmocr framework and PARSeq model. First, you need to create the openmmlab enviroment. Then run the script to do all thing for this module
+Use the BLIP image encoder to extract visual feature vectors from images in the keyframe database. These vectors are saved in the .np format:
 ```bash
-cd ocr 
+python getBlipFeat.py
+```
+2. OCR-based Module
+Switch to the OCR module directory:
+```bash
+cd backend/module/ocr
+```
+Set up and use DBNET in the mmocr framework and the PARSeq model. Create the openmmlab environment and run the scripts for the OCR module:
+```bash
 bash install_mmocr.sh
 bash run.sh
-fuckkkkk
 ```
-Then địt con mẹ mày
 3. ASR-based Module
+Change to the ASR module directory:
 ```bash
-
+cd backend/module/asr
+```
+Utilize Whisper Large V2 for audio-to-text conversion. Execute this after segmenting the audio in the previous step:
+```bash
+python getASR.py
 ```
 4. Object-based Module
-- To begin, you should detect the objects in every frame by using the following command:
+First, detect objects in every frame:
 ```bash
-python backend/module/object/detr.py
+python detr.py
 ```
-- After obtaining the result JSON file, you can create the inverted index database by executing:
+Then, create an inverted index database from the resulting JSON file:
 ```bash
-python backend/module/object/inverted_file.py
+python inverted_file.py
 ```
 5. Sketch-based Module
 ```bash
