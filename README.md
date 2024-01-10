@@ -63,9 +63,13 @@ python backend/module/semantic/getBlipFeat.py
 ```
 - After this process, you will obtain a database vector containing distinctive features for each image in the keyframe database.
 2. OCR-based Module
+- In this module, we use DBNET in mmocr framework and PARSeq model. First, you need to create the openmmlab enviroment. Then run the script to do all thing for this module
 ```bash
-
+cd ocr 
+bash install_mmocr.sh
+bash run.sh
 ```
+- Then
 3. ASR-based Module
 ```bash
 
