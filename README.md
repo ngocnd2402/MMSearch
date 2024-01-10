@@ -92,7 +92,8 @@ To obtain pose features from every frame, run:
 python backend/module/pose/getPoseFeat.py
 ```
 The result will be saved as `features/pvecs`.
-## MMSearch UI
+
+### Create Frontend Enviroment 
 Run the following commands to install frontend dependencies:
 ```bash
 cd frontend
@@ -101,3 +102,11 @@ cd frontend
 ```bash
 npm install
 ```
+
+## Running MMSearch on Localhost
+```bash
+bash bash/start.sh
+```
+If all went smoothly, your MMSearch should now be up and running. Simply go to http://localhost:8888 and have fun. Thhese are the default settings, so if you made any changes, please adjust the address as needed.
+
+Furthermore, the Core API specification is accessible (by default) at https://localhost:7777/docs/ .
