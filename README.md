@@ -47,29 +47,35 @@ pip install -r env/server.txt
 ```
 
 ### Preprocessing your data
-If you possess your own dataset containing videos, please preprocess the data according to our guidelines:
-
+To prepare your data, start by segmenting the video database into individual frames using the following command:
 ```bash
 python preprocessing/cut_frame.py
 ```
-
-Once completed, your video data will be efficiently divided into frames.
+Next, for audio retrieval purposes, extract audio in MP3 format from the video database with the following command:
+```bash
+python preprocessing/cut_audio.py
+```
+To help you get the accurate frame positioning in the videos by creating a mapping dataset with details such as frame number, timestamp, etc, ... using the following command:
+```bash
+python preprocessing/make_mapping.py
+```
 
 ### Build & Run Each Component
 1. Semantic-based Module
-- Commencing the process, we employ the BLIP image encoder to derive precise visual feature vectors for every image within the keyframe database. These vectors are subsequently stored in the .np format through the execution of the following command:
+Commencing the process, we employ the BLIP image encoder to derive precise visual feature vectors for every image within the keyframe database. These vectors are subsequently stored in the .np format through the execution of the following command:
 ```bash
 python backend/module/semantic/getBlipFeat.py
 ```
-- After this process, you will obtain a database vector containing distinctive features for each image in the keyframe database.
+After this process, you will obtain a database vector containing distinctive features for each image in the keyframe database.
 2. OCR-based Module
-- In this module, we use DBNET in mmocr framework and PARSeq model. First, you need to create the openmmlab enviroment. Then run the script to do all thing for this module
+In this module, we use DBNET in mmocr framework and PARSeq model. First, you need to create the openmmlab enviroment. Then run the script to do all thing for this module
 ```bash
 cd ocr 
 bash install_mmocr.sh
 bash run.sh
+fuckkkkk
 ```
-- Then
+Then địt con mẹ mày
 3. ASR-based Module
 ```bash
 
