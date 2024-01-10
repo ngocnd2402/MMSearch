@@ -33,15 +33,12 @@ python preprocessing/cut_frame.py
 Once completed, your video data will be efficiently divided into frames.
 
 ### Build & Run Each Component
-First, run this command:
-```bash
-cd backend/module
-```
 1. Semantic-based Module
+- Commencing the process, we employ the BLIP image encoder to derive precise visual feature vectors for every image within the keyframe database. These vectors are subsequently stored in the .np format through the execution of the following command:
 ```bash
-cd semantic
+python backend/module/semantic/getBlipFeat.py
 ```
-
+- After this process, you will obtain a database vector containing distinctive features for each image in the keyframe database.
 2. OCR-based Module
 ```bash
 
@@ -51,16 +48,13 @@ cd semantic
 
 ```
 4. Object-based Module
-```bash
-cd object
-```
 - To begin, you should detect the objects in every frame by using the following command:
 ```bash
-python detr.py
+python backend/module/object/detr.py
 ```
 - After obtaining the result JSON file, you can create the inverted index database by executing:
 ```bash
-python inverted_file.py
+python backend/module/object/inverted_file.py
 ```
 5. Sketch-based Module
 ```bash
@@ -72,8 +66,9 @@ cd pose
 ```
 To obtain pose features from every frame, run:
 ```bash
-python getPoseFeat.py
+python backend/module/pose/getPoseFeat.py
 ```
+The result will be saved as `features/pvecs`.
 ## MMSearch UI
 Run the following commands to install frontend dependencies:
 ```bash
