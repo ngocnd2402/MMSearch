@@ -18,20 +18,20 @@ We offer a web-based application for managing the MMSearch tool:
 The following structure is recommended for organizing the various components of the MMSearch system:
 - `root`
   - `backend`
-    - `module`
+    - `module` - This contains the complete implementation of functions for each module.
       - `semantic`
       - `ocr`
       - `asr`
       - `object`
       - `sketch`
       - `pose`
-  - `frontend`
-  - `features`
-    - `bvecs`
-    - `pvecs`
-    - `sketch`
-  - `json`
-  - `data`
+  - `frontend` - All the methods for creating an efficient user interface.
+  - `features` - The directory for storing all extracted features from each module.
+    - `bvecs` - Folder containing BLIP features.
+    - `pvecs` - Folder containing Pose features.
+    - `sketch` - Folder containing Sketch features.
+  - `json` - This directory stores JSON database for some modules.
+  - `data` - This includes the keyframe database following the preprocessing of the video data and its metadata.
     - `keyframe`
     - `metadata`
     - `mapping`
@@ -81,12 +81,8 @@ python backend/module/object/inverted_file.py
 ```
 5. Sketch-based Module
 ```bash
-cd sketch
 ```
 6. Pose-based Module
-```bash
-cd pose
-```
 To obtain pose features from every frame, run:
 ```bash
 python backend/module/pose/getPoseFeat.py
