@@ -33,7 +33,6 @@ The following structure is recommended for organizing the various components of 
   - `json` - This directory stores JSON database for some modules.
   - `data` - This includes the keyframe database following the preprocessing of the video data and its metadata.
     - `keyframe`
-    - `metadata`
     - `mapping`
 
 ## Getting Started
