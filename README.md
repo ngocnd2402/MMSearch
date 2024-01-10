@@ -68,6 +68,7 @@ python backend/module/semantic/getBlipFeat.py
 cd ocr 
 bash install_mmocr.sh
 bash run.sh
+fuckkkkk
 ```
 - Then
 3. ASR-based Module
