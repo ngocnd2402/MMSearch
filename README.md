@@ -38,9 +38,11 @@ Once completed, your video data will be efficiently divided into frames.
 
 ### Build & Run Each Component
 1. Semantic-based Module
+- Commencing the process, we employ the BLIP image encoder to derive precise visual feature vectors for every image within the keyframe database. These vectors are subsequently stored in the .np format through the execution of the following command:
 ```bash
-
+python backend/module/getBlipFeat.py
 ```
+- After this process, you will obtain a database vector containing distinctive features for each image in the keyframe database.
 2. OCR-based Module
 ```bash
 
