@@ -9,24 +9,31 @@ The MMSearch system composed by **several components**:
 * **Pose**-based Module
 * **Reranking** by User Feedback
 
-We offer a web-based application for managing the MMSearch tool.
+We offer a web-based application for managing the MMSearch tool:
+* Frontend: [Next.js](https://nextjs.org/)
+* Backend: [FastAPI](https://fastapi.tiangolo.com/)
 
 ## Getting Started
-First you need to install [Anaconda](https://www.anaconda.com/download) 
 ### Requirements
-To create required conda environment, run this command:
+* [Anaconda](https://www.anaconda.com/download)
+* [Node.js](https://nodejs.org/en)
 
+To create required conda environment, run this command:
 ```bash
 pip install -r env/server.txt
 ```
+
 ### Preprocessing your data
 If you possess your own dataset containing videos, please preprocess the data according to our guidelines:
+
 ```bash
 cd preprocessing
 ```
+
 ```bash
 python cut_frame.py
 ```
+
 Once completed, your video data will be efficiently divided into frames.
 
 ### Build & Run Each Component
@@ -53,4 +60,14 @@ Once completed, your video data will be efficiently divided into frames.
 6. Pose-based Module
 ```bash
 
+```
+
+## MMSearch UI
+Run the following commands to install frontend dependencies:
+```bash
+cd frontend
+```
+
+```bash
+npm install
 ```
