@@ -62,7 +62,7 @@ python preprocessing/make_mapping.py
 ```
 
 ### Build & Run Each Component
-1. Semantic-based Module
+#### 1. Semantic-based Module
 Navigate to the semantic module directory:
 ```bash
 cd backend/module/semantic
@@ -71,7 +71,7 @@ Use the BLIP image encoder to extract visual feature vectors from images in the 
 ```bash
 python getBlipFeat.py
 ```
-2. OCR-based Module
+#### 2. OCR-based Module
 Switch to the OCR module directory:
 ```bash
 cd backend/module/ocr
@@ -81,7 +81,7 @@ Set up and use DBNET in the mmocr framework and the PARSeq model. Create the ope
 bash install_mmocr.sh
 bash run.sh
 ```
-3. ASR-based Module
+#### 3. ASR-based Module
 Change to the ASR module directory:
 ```bash
 cd backend/module/asr
@@ -90,7 +90,7 @@ Utilize Whisper Large V2 for audio-to-text conversion. Execute this after segmen
 ```bash
 python getASR.py
 ```
-4. Object-based Module
+#### 4. Object-based Module
 First, detect objects in every frame:
 ```bash
 python detr.py
