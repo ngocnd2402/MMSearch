@@ -86,7 +86,7 @@ Change to the ASR module directory:
 ```bash
 cd backend/module/asr
 ```
-Utilize Whisper Large V2 for audio-to-text conversion. Execute this after segmenting the audio in the previous step:
+Utilize Whisper Large for audio-to-text conversion. Execute this after segmenting the audio in the previous step:
 ```bash
 python getASR.py
 ```
