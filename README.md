@@ -125,7 +125,7 @@ To obtain pose features from every frame, run:
 ```bash
 python backend/module/pose/getPoseFeat.py
 ```
-#### 7. Add meilisearch indexing 
+#### 7. Add data to MeiliSearch
 After completing the OCR and ASR steps in the previous section to generate the JSON index, proceed to add the index to Meilisearch using the following command:
 ```bash
 python add_meili.py
