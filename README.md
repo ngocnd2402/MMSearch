@@ -103,7 +103,6 @@ Then, create an inverted index database from the resulting JSON file:
 ```bash
 python inverted_file.py
 ```
-
 #### 5. Sketch-based Module
 Go to the sketch module directory:
 ```bash
@@ -117,7 +116,6 @@ Download the pretrained_weight and put it in the right folder. Then, extract ske
 ```bash
 python getSketch.py
 ```
-
 #### 6. Pose-based Module
 Get to the pose module directory:
 ```bash
@@ -126,6 +124,11 @@ cd backend/module/pose
 To obtain pose features from every frame, run:
 ```bash
 python backend/module/pose/getPoseFeat.py
+```
+#### 7. Add meilisearch indexing 
+After completing the OCR and ASR steps in the previous section to generate the JSON index, proceed to add the index to Meilisearch using the following command:
+```bash
+python add_meili.py
 ```
 ### Create Frontend Enviroment 
 Run the following commands to install frontend dependencies:
