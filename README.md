@@ -91,6 +91,10 @@ Utilize Whisper Large V2 for audio-to-text conversion. Execute this after segmen
 python getASR.py
 ```
 #### 4. Object-based Module
+Go to the object module directory:
+```bash
+cd backend/module/object
+```
 First, detect objects in every frame:
 ```bash
 python detr.py
@@ -99,16 +103,30 @@ Then, create an inverted index database from the resulting JSON file:
 ```bash
 python inverted_file.py
 ```
-5. Sketch-based Module
+
+#### 5. Sketch-based Module
+Go to the sketch module directory:
 ```bash
+cd backend/module/sketch
 ```
-6. Pose-based Module
+First, clone the original repository:
+```bash
+git clone https://github.com/aneeshan95/Sketch_LVM
+```
+Download the pretrained_weight and put it in the right folder. Then, extract sketch feature vectors for all images in your keyframe database:
+```bash
+python getSketch.py
+```
+
+#### 6. Pose-based Module
+Get to the pose module directory:
+```bash
+cd backend/module/pose
+```
 To obtain pose features from every frame, run:
 ```bash
 python backend/module/pose/getPoseFeat.py
 ```
-The result will be saved as `features/pvecs`.
-
 ### Create Frontend Enviroment 
 Run the following commands to install frontend dependencies:
 ```bash
