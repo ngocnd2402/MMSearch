@@ -47,6 +47,8 @@ To create required conda environment, run this command:
 pip install -r env/server.txt
 ```
 
+Our pretrained weights of OCR can be found here [Google Drive](https://drive.google.com/drive/folders/1ptwkEELYkYewb-667hSoftiWj4cv6I1J)
+
 ### Preprocessing your data
 To prepare your data, start by segmenting the video database into individual frames using the following command:
 ```bash
