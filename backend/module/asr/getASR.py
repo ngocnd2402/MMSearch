@@ -54,4 +54,4 @@ for batch in os.listdir(root_path):
     batch_audio_path = os.path.join(root_path, batch, "Audio")
     output_json = f"{json_path}/asr_{batch}.json"
     process_batch(batch_audio_path, output_json, processor, model)
-print("Processing completed for all batches.")
+print("Processing completed for all batches")
