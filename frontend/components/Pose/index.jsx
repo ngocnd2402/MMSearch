@@ -203,20 +203,20 @@ const Pose = () => {
 
     const setTouchHead = () => {
         setPoints([
-            { id: 0, cx: 168, cy: 134, colorStr: "#E92EFB" },  // Nose (head slightly lifted)
-            { id: 1, cx: 132, cy: 162, colorStr: "#FF2079" },  // Left Shoulder
-            { id: 2, cx: 196, cy: 164, colorStr: "#FF2079" },  // Right Shoulder
-            { id: 3, cx: 120, cy: 148, colorStr: "#FE6F61" },  // Left Elbow (straight arms)
-            { id: 4, cx: 222, cy: 156, colorStr: "#FE6F61" },  // Right Elbow
-            { id: 5, cx: 152, cy: 134, colorStr: "#FEEC2D" },  // Left Wrist/Hand (directly under shoulders)
-            { id: 6, cx: 192, cy: 132, colorStr: "#FEEC2D" },  // Right Wrist/Hand
-            { id: 7, cx: 142, cy: 228, colorStr: "#00FF2E" },  // Left Hip
-            { id: 8, cx: 186, cy: 230, colorStr: "#00FF2E" },  // Right Hip
-            { id: 9, cx: 128, cy: 264, colorStr: "#00DDFF" },  // Left Knee (legs straight)
-            { id: 10, cx: 188, cy: 270, colorStr: "#00DDFF" }, // Right Knee
+            { id: 0, cx: 176, cy: 100, colorStr: "#E92EFB" },  // Nose (head slightly lifted)
+            { id: 1, cx: 150, cy: 130, colorStr: "#FF2079" },  // Left Shoulder
+            { id: 2, cx: 202, cy: 135, colorStr: "#FF2079" },  // Right Shoulder
+            { id: 3, cx: 126, cy: 70, colorStr: "#FE6F61" },  // Left Elbow (straight arms)
+            { id: 4, cx: 241, cy: 93, colorStr: "#FE6F61" },  // Right Elbow
+            { id: 5, cx: 173, cy: 77, colorStr: "#FEEC2D" },  // Left Wrist/Hand (directly under shoulders)
+            { id: 6, cx: 197, cy: 70, colorStr: "#FEEC2D" },  // Right Wrist/Hand
+            { id: 7, cx: 145, cy: 203, colorStr: "#00FF2E" },  // Left Hip
+            { id: 8, cx: 190, cy: 207, colorStr: "#00FF2E" },  // Right Hip
+            { id: 9, cx: 137, cy: 271, colorStr: "#00DDFF" },  // Left Knee (legs straight)
+            { id: 10, cx: 202, cy: 272, colorStr: "#00DDFF" }, // Right Knee
             { id: 11, cx: 116, cy: 320, colorStr: "#057DFF" }, // Left Ankle/Foot (feet together)
-            { id: 12, cx: 208, cy: 320, colorStr: "#057DFF" }, // Right Ankle/Foot
-            { id: 13, cx: 168, cy: 164, colorStr: "#E92EFB" }, // Neck (aligned with the back)
+            { id: 12, cx: 192, cy: 321, colorStr: "#057DFF" }, // Right Ankle/Foot
+            { id: 13, cx: 174, cy: 128, colorStr: "#E92EFB" }, // Neck (aligned with the back)
         ]);
     }
 

@@ -1,20 +1,16 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useResultData } from "@/context/provider";
 import { HOST_URL } from "@/constants/api";
 import Canvas from "../Canvas";
 import Sketch from "../Sketch";
 import Pose from "../Pose";
 
-const TextField = React.lazy(() => import('@mui/material/TextField'));
-
 const SearchCard = ({ topk }) => {
   // State for clicked methods
-  const [activeButtons, setActiveButtons] = useState(new Set(["semantic"]));
+  const [activeButtons, setActiveButtons] = useState(() => new Set(["semantic"]));
 
   // State for storing user input with type and value
-  const [inputValues, setInputValues] = useState([
-    { type: "semantic", value: null },
-  ]);
+  const [inputValues, setInputValues] = useState(() => [{ type: "semantic", value: null }]);
 
   // State for redo action
   const [redoStack, setRedoStack] = useState([]);
@@ -25,10 +21,16 @@ const SearchCard = ({ topk }) => {
   // Ref for the file input
   const fileInputRef = useRef();
 
+  const textAreaRef = useRef(null);
+
   const { setResultData, canvasData, setCanvasData, setQuery, sketchData, setSketchData, poseData, setPoseData } = useResultData();
 
+  useEffect(() => {
+    localStorage.setItem("inputValues", JSON.stringify(inputValues));
+  }, [inputValues]);
+
   // Make the button activate when clicked
-  const handleButtonClick = useCallback((buttonType) => {
+  const handleButtonClick = (buttonType) => {
     setActiveButtons(prevActiveButtons => {
       const updatedActiveButtons = new Set(prevActiveButtons);
       if (updatedActiveButtons.has(buttonType)) {
@@ -47,10 +49,10 @@ const SearchCard = ({ topk }) => {
         return [...prevInputValues, { type: buttonType, value: "" }];
       }
     });
-  }, []);
+  };
 
   // Close an input query
-  const handleCloseClick = useCallback((type) => {
+  const handleCloseClick = (type) => {
     setInputValues(prevInputValues => prevInputValues.filter(input => input.type !== type));
     setActiveButtons(prevActiveButtons => new Set([...prevActiveButtons].filter(activeType => activeType !== type)));
     if (type === "semantic") {
@@ -62,10 +64,10 @@ const SearchCard = ({ topk }) => {
     } else if (type === "pose") {
       setPoseData([])
     }
-  }, []);
+  };
 
   // Update value when changed an input query 
-  const handleInputChange = useCallback((index, e) => {
+  const handleInputChange = (index, e) => {
     setInputValues((prevInputValues) => {
       const newInputValues = [...prevInputValues];
       newInputValues[index].value = e.target.value;
@@ -76,10 +78,10 @@ const SearchCard = ({ topk }) => {
 
       return newInputValues;
     });
-  }, [inputValues, setQuery]);
+  };
 
   // Undo the action
-  const handleUndo = useCallback(() => {
+  const handleUndo = () => {
     if (inputValues.length > 1) {
       const removedItem = inputValues[inputValues.length - 1];
       setInputValues(inputValues.slice(0, -1));
@@ -89,10 +91,10 @@ const SearchCard = ({ topk }) => {
       newActiveButtons.delete(removedItem.type);
       setActiveButtons(newActiveButtons);
     }
-  }, [inputValues, redoStack, activeButtons]);
+  };
 
   // Redo the action
-  const handleRedo = useCallback(() => {
+  const handleRedo = () => {
     if (redoStack.length > 0) {
       const restoredItem = redoStack[redoStack.length - 1];
       setInputValues([...inputValues, restoredItem]);
@@ -101,7 +103,7 @@ const SearchCard = ({ topk }) => {
       const newActiveButtons = new Set([...activeButtons, restoredItem.type]);
       setActiveButtons(newActiveButtons);
     }
-  }, [inputValues, redoStack, activeButtons]);
+  };
 
   // Reset all input query to the beginning (only use text query)
   const handleReset = (e) => {
@@ -163,7 +165,7 @@ const SearchCard = ({ topk }) => {
   };
 
   // Handle file change for the sketch upload
-  const handleSketchUpload = useCallback((e) => {
+  const handleSketchUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -172,7 +174,7 @@ const SearchCard = ({ topk }) => {
       };
       reader.readAsDataURL(file);
     }
-  }, []);
+  };
 
   // Handle when clicked submit button
   const handleSubmit = async () => {
@@ -203,7 +205,7 @@ const SearchCard = ({ topk }) => {
       await fetchResults(queryValues);
     }
   };
-
+  
   // const handleFilter = async () => {
   //   console.log(object)
   //   const requestBody = JSON.stringify({ object: object });
@@ -232,12 +234,25 @@ const SearchCard = ({ topk }) => {
   const showPose = activeButtons.has("pose");
 
   // Function to clear the uploaded sketch
-  const handleClearUploadedSketch = useCallback(() => {
+  const handleClearUploadedSketch = () => {
     setSketchData("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";  // Reset the file input
     }
-  }, []);
+  };
+
+  // Function to adjust textarea height
+  const adjustTextAreaHeight = () => {
+    const textarea = textAreaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  };
+
+  useEffect(() => {
+    adjustTextAreaHeight();
+  }, [inputValues]);
 
   return (
     <div className="flex flex-col gap-2 bg-white p-4 rounded-lg">
@@ -270,29 +285,29 @@ const SearchCard = ({ topk }) => {
           ))}
         </div>
         {inputValues.map((input, index) => (input.type !== "object" && input.type !== "sketch" && input.type !== "pose" &&
-          <div key={index}>
-            <div className="flex relative items-center">
-              <TextField
-                id={`filled-multiline-flexible-${index}`}
-                multiline
-                maxRows={4}
-                label={input.type}
-                variant="outlined"
-                value={input.value}
-                onChange={(e) => handleInputChange(index, e)}
-                placeholder={input.type}
-                color="primary"
-                className="w-full text-xs rounded-md text-gray-900 border border-blue-600 focus:border-2 mt-2"
-              />
-              <button onClick={() => handleCloseClick(input.type)} className="absolute top-0 right-0 mt-3 mr-2 text-sm">
+            <div className="relative flex h-full flex-1 md:flex-col" key={index}>
+              <div className="text-lg">
+                <textarea
+                  tabIndex={0}
+                  rows={1}
+                  ref={textAreaRef}
+                  type="text"
+                  onChange={(e) => handleInputChange(index, e)}
+                  value={input.value || ''}
+                  placeholder={input.type}
+                  style={{ maxHeight: "200px", height: "56px", overflowY: "hidden" }}
+                  className="m-0 w-full resize-none border p-4 bg-white border-gray-300 rounded-md shadow-sm focus:outline-blue-500"
+                >
+                </textarea>
+              </div>
+              <button onClick={() => handleCloseClick(input.type)} className="absolute top-0 right-0 mr-2 mt-1 text-sm">
                 &times;
               </button>
-            </div>
           </div>
         ))}
         {showCanvas &&
           <div className="relative pt-2">
-            <button onClick={() => handleCloseClick("object")} className="absolute top-0 right-0 cursor-pointer">
+            <button onClick={() => handleCloseClick("object")} className="absolute -top-1 right-0 cursor-pointer">
               &times;
             </button>
             <Canvas />
@@ -328,6 +343,15 @@ const SearchCard = ({ topk }) => {
                 Clear
               </button>
             </div>
+          </div>
+        }
+        {showPose &&
+          <div className="relative pt-5">
+            <p className="mb-2 text-sm">Move the stick man joints</p>
+            <button onClick={() => handleCloseClick("pose")} className="absolute top-0 right-0 cursor-pointer">
+              &times;
+            </button>
+            <Pose />
           </div>
         }
         <button onClick={handleSubmit} className="bg-blue-600 text-white p-3 rounded-full mt-2 hover:bg-blue-700">Search</button>

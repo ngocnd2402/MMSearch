@@ -3,12 +3,7 @@ import { useResultData } from '@/context/provider';
 import { HOST_URL } from '@/constants/api';
 import { fetchCsvData } from '@/utils/fetchCsvData';
 import Video from './Video';
-import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
-import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
-import PlayCircleRoundedIcon from '@mui/icons-material/PlayCircleRounded';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import LaunchIcon from '@mui/icons-material/Launch';
+import { ArrowBack, ArrowForward, Plus, Minus, PlayCircle, Popout } from './Icons';
 
 const Gallery = () => {
   const {
@@ -235,30 +230,30 @@ const Gallery = () => {
 
   return (
     <div className='w-2/3 flex flex-col h-screen justify-between bg-blue-100'>
-      <div className="grid grid-cols-4 overflow-y-auto flex-grow-0" style={{ maxHeight: `${Math.min(100 * 7 / 8, 100)}vh` }}>
+      <div className="grid grid-cols-2 overflow-y-auto flex-grow-0" style={{ maxHeight: `${Math.min(100 * 7 / 8, 100)}vh` }}>
         {resultData && resultData.map((item, index) => (
           <div key={index} className="relative">
             <img
               src={`${HOST_URL}frame/${item.frame}`}
               alt={`Image ${index}`}
-              className={`w-full object-cover cursor-pointer box-border ${clickedFrame === item.frame ? 'outline outline-4 -outline-offset-4 outline-blue-600' : ''}`}
+              className={`w-full object-cover cursor-pointer box-border ${clickedFrame === item.frame ? 'outline outline-[12px] -outline-offset-[12px] outline-red-600' : ''}`}
               onClick={() => handleImageClick(item.frame)}
               onContextMenu={(event) => handleImageContextMenu(event, item.frame)}
             />
             <button
-              className="absolute top-0 right-1"
+              className={`absolute top-1 right-1 cursor-pointer rounded-sm ${relevantImages.includes(item.frame) ? 'bg-green-500 text-white border border-green-500' : 'text-green-500 border border-green-500 bg-white hover:bg-green-500 hover:text-white'}`}
               onClick={() => handleAddRelevantImage(item.frame)}
             >
-              <AddIcon sx={{ fontSize: '14px' }} className={`cursor-pointer rounded-sm ${relevantImages.includes(item.frame) ? 'bg-green-500 text-white' : 'text-green-500 border border-green-500 bg-white hover:bg-green-500 hover:text-white'}`} />
+              <Plus />
             </button>
             <button
-              className="absolute top-0 left-1"
+              className={`absolute top-1 left-1 cursor-pointer rounded-sm ${irrelevantImages.includes(item.frame) ? 'bg-red-500 text-white border border-red-500' : 'text-red-500 border border-red-500 bg-white hover:bg-red-500 hover:text-white'}`}
               onClick={() => handleAddIrrelevantImage(item.frame)}
             >
-              <RemoveIcon sx={{ fontSize: '14px' }} className={`cursor-pointer rounded-sm ${irrelevantImages.includes(item.frame) ? 'bg-red-500 text-white' : 'text-red-500 border border-red-500 bg-white hover:bg-red-500 hover:text-white'}`} />
+              <Minus />
             </button>
             <button className='absolute bottom-1 right-1 text-[8px] text-white bg-blue-600 rounded-sm p-0.5 hover:bg-blue-700' onClick={submitAnswer}>
-              Sumbit
+              Submit
             </button>
           </div>
         ))}
@@ -270,27 +265,27 @@ const Gallery = () => {
               <div className='flex flex-row gap-2 items-center'>
                 <p className='text-base'>{clickedFrame.split('/')[1]}, {getFrameIndex(clickedFrame)}</p>
                 <button onClick={handleOpenModal}>
-                  <LaunchIcon className={`cursor-pointer rounded-sm text-black text-lg`} />
+                  <Popout className={`cursor-pointer rounded-sm text-black text-lg`} />
                 </button>
               </div>
               <button
                 onClick={handlePlayVideo}
                 className="p-2 w-fit bg-blue-600 text-white rounded-full cursor-pointer hover:bg-blue-700 transition duration-300"
               >
-                <PlayCircleRoundedIcon />
+                <PlayCircle />
               </button>
               <div className='flex gap-4'>
                 <button
                   onClick={handlePrev}
                   className="text-blue-600 hover:text-blue-700 cursor-pointer font-medium"
                 >
-                  <ArrowBackIosNewRoundedIcon />
+                  <ArrowBack />
                 </button>
                 <button
                   onClick={handleNext}
                   className="text-blue-600 hover:text-blue-700 cursor-pointer font-medium"
                 >
-                  <ArrowForwardIosRoundedIcon />
+                  <ArrowForward />
                 </button>
               </div>
             </div>
