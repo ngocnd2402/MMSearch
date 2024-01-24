@@ -1,12 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import {
     ReactSketchCanvas,
 } from "react-sketch-canvas";
-import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
-import RedoRoundedIcon from '@mui/icons-material/RedoRounded';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import AcUnitRoundedIcon from '@mui/icons-material/AcUnitRounded';
-import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
+import { Undo, Redo, Edit, Eraser, Restart } from "./Icons";
 
 const styles = {
     border: "0.0625rem solid #9c9c9c",
@@ -66,21 +62,21 @@ const Sketch = ({ setCanvasRef }) => {
             <div className="flex flex-row justify-between">
                 <div className="flex flex-row gap-1">
                     <button onClick={undoHandler} className="hover:text-blue-800">
-                        <UndoRoundedIcon />
+                        <Undo />
                     </button>
                     <button onClick={redoHandler} className="hover:text-blue-800">
-                        <RedoRoundedIcon />
+                        <Redo />
                     </button>
                     <button onClick={resetCanvasHandler} className="hover:text-blue-800">
-                        <RestartAltRoundedIcon />
+                        <Restart />
                     </button>
                 </div>
                 <div className="flex flex-row gap-1">
                     <button onClick={penHandler} className="hover:text-blue-800">
-                        <EditRoundedIcon />
+                        <Edit />
                     </button>
                     <button onClick={eraserHandler} className="hover:text-blue-800">
-                        <AcUnitRoundedIcon />
+                        <Eraser />
                     </button>
                 </div>
             </div>
@@ -90,6 +86,7 @@ const Sketch = ({ setCanvasRef }) => {
                 strokeWidth={2}
                 strokeColor="#000000"
                 canvasColor="#FFFFFF"
+                height={250}
             />
         </div>
     );
