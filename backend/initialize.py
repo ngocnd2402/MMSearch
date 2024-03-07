@@ -1,6 +1,5 @@
 from faiss_class import (
-    BlipTextEmbedding,
-    BlipImageEmbedding,
+    Blip2Embedding,
     SketchEmbedding,
     VectorIndexer,
     VectorSearchEngine,
@@ -24,23 +23,20 @@ from math import ceil, floor
 import asyncio
 import numpy as np
 import csv
-import json
 from natsort import natsorted
 from fastapi import File, UploadFile, Form, HTTPException
 from fastapi.param_functions import File
 
 # GLOBAL VARIABLES
 
-blip_text_embedd = BlipTextEmbedding()
-blip_image_embedd = BlipImageEmbedding()
+semantic_embedd = Blip2Embedding()
 sketch_embedd = SketchEmbedding()
-
 KEYFRAME_PATH = "Data/Reframe"
 MAPFRAME_PATH = "Data/Mapframe"
 METADATA_PATH = "Data/Metadata"
-FEATURES_PATH = "Features/Bvecs"
+FEATURES_PATH = "Features/BLIP2"
 SKETCH_PATH = "Features/Sketch"
-POSE_PATH = "Features/Pvecs"
+POSE_PATH = "Features/Vector_Pose"
 frontend_mapping_folder = "Data/Mapframe"
 inverted_file = "JSON/inverted_file.json"
 
