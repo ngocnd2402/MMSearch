@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 from PIL import Image
 import torch
+import glob
 from typing import List, Dict
 import os
 import numpy as np
@@ -14,38 +15,35 @@ import requests
 from io import BytesIO
 import base64
 from towhee import pipe, ops
+from lavis.models import load_model_and_preprocess
 import sys 
-sys.path.append('/home/visedit/WorkingSpace/AIC2023/Sketch_LVM')
+sys.path.append('/mmlabworkspace/Students/visedit/AIC2023/Sketch_LVM')
 from src.model_LN_prompt import Model
 from torchvision import transforms
     
-class BlipTextEmbedding:
+class Blip1Embedding:
     def __init__(self):
         self.device = "cpu"
-        self.model = ops.image_text_embedding.blip(model_name='blip_itm_large_coco', modality='text', device=self.device)
+        self.text_model = ops.image_text_embedding.blip(model_name='blip_itm_large_coco', modality='text', device=self.device)
+        self.image_model = ops.image_text_embedding.blip(model_name='blip_itm_large_coco', modality='image', device=self.device)
         self.text_pipe = (
             pipe.input('text')
-            .map('text', 'vec', self.model)
+            .map('text', 'vec', self.text_model)
             .output('vec')
         )
-
-    def __call__(self, text: str) -> np.ndarray:
+        self.img_pipe = (
+            pipe.input('img')
+            .map('img', 'vec', self.image_model)  
+            .output('vec')
+        )
+        
+    def embed_text(self, text: str) -> np.ndarray:
         output_text = self.text_pipe(text)
         text_embedd = output_text.get()
         text_vec = np.array(text_embedd).reshape(-1)
         return text_vec
-
-class BlipImageEmbedding:
-    def __init__(self):
-        self.device = "cpu"
-        self.model = ops.image_text_embedding.blip(model_name='blip_itm_large_coco', modality='image', device=self.device)
-        self.img_pipe = (
-            pipe.input('img')
-            .map('img', 'vec', self.model)  
-            .output('vec')
-        )
-
-    def __call__(self, image_path: str) -> np.ndarray:
+    
+    def embed_image(self, image_path: str) -> np.ndarray:
         if image_path.startswith("http://") or image_path.startswith("https://"):
             response = requests.get(image_path)
             image = Image.open(BytesIO(response.content)).convert("RGB")
@@ -57,8 +55,35 @@ class BlipImageEmbedding:
         image_vec = np.array(image_embedd).reshape(-1)
         return image_vec   
 
+    
+class Blip2Embedding:
+    def __init__(self):
+        self.device = 'cuda'
+        self.model, self.vis_processors, self.txt_processors = load_model_and_preprocess(name="blip2_feature_extractor", model_type="coco", is_eval=True, device=self.device)
+    
+    def embed_text(self, text: str) -> np.ndarray:
+        text_processed = self.txt_processors["eval"](text)
+        sample = {"text_input": [text_processed]}
+        text_emb = self.model.extract_features(sample, mode="text").text_embeds[0,0,:]
+        text_emb_np = text_emb.cpu().detach().numpy()
+        text_emb = np.array(text_emb_np).reshape(-1)
+        return text_emb
+
+    def embed_image(self, image_path: str) -> np.ndarray:
+        if image_path.startswith("http://") or image_path.startswith("https://"):
+            response = requests.get(image_path)
+            image = Image.open(BytesIO(response.content)).convert("RGB")
+        else:
+            image = Image.open(image_path).convert("RGB")
+        image_processed = self.vis_processors["eval"](image).unsqueeze(0).to(self.device)
+        sample = {"image": image_processed}
+        image_emb = self.model.extract_features(sample, mode="image").image_embeds[0,0,:]
+        image_emb_np = image_emb.cpu().detach().numpy()
+        image_emb = np.array(image_emb_np).reshape(-1)
+        return image_emb
+
 class SketchEmbedding:
-    def __init__(self, device="cuda", CKPT_PATH="Sketch_LVM/saved_models/LN_prompt/last.ckpt"):
+    def __init__(self, device="cuda", CKPT_PATH="/mmlabworkspace/Students/visedit/AIC2023/Sketch_LVM/saved_models/LN_prompt/last.ckpt"):
         self.device = device
         self.model = Model()
         self.model_checkpoint = torch.load(CKPT_PATH, map_location=self.device)
@@ -142,7 +167,6 @@ class VectorSearchEngine:
             for i, index in enumerate(indices[0]) if index in video_frame_mapping
         ]
 
-
 class PoseIndexer:
     def __init__(self, features_path: str):
         self.index, self.pose_frame_mapping = self.indexing_methods(features_path)
@@ -180,20 +204,19 @@ class PoseSearchEngine:
     def calculate_relative_distances(vector):
         num_points = len(vector) // 2
         distances = []
-        angles = []
+        if num_points < 2:
+            return np.array(distances)
 
         for i in range(1, num_points):
             pivot_x, pivot_y = vector[0], vector[1]
             current_x, current_y = vector[i * 2], vector[i * 2 + 1]
-            distances.extend([current_x - pivot_x, current_y - pivot_y])
+            distances.extend([abs(current_x - pivot_x), abs(current_y - pivot_y)])
 
             for j in range(1, i):
                 prev_x, prev_y = vector[j * 2], vector[j * 2 + 1]
-                distances.extend([current_x - prev_x, current_y - prev_y])
-                angle = np.arctan2(current_y - prev_y, current_x - prev_x)
-                angles.append(angle)
+                distances.extend([abs(current_x - prev_x), abs(current_y - prev_y)])
 
-        return np.concatenate([distances, angles])
+        return np.array(distances)
 
     def search(self, query_list: List[float], topk: int) -> List[Dict]:
         query_arr = np.array(query_list, dtype='float32')
